@@ -1,12 +1,16 @@
 const path = require('path');
 const express = require('express');
-// set up Handlebars.js as app's template engine of choice
-const exphbs = require('express-handlebars');
-// importing the connection to sequelize from config/connection.js
-const sequelize = require('./config/connection');
-
 // sets up an Express session and connects the session to our Sequelize db
 const session = require('express-session');
+// set up Handlebars.js as app's template engine of choice
+const exphbs = require('express-handlebars');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+
+// importing the connection to sequelize from config/connection.js
+const sequelize = require('./config/connection');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
 const sess = {
@@ -17,21 +21,21 @@ const sess = {
     store: new SequelizeStore({
       db: sequelize
     })
-  };
+};
   
+app.use(session(sess));
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-const hbs = exphbs.create({});
+const helpers = require('./utils/helpers');
+const hbs = exphbs.create({ helpers });
 
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 
-app.use(session(sess));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(require('./controllers/'));
 
 sequelize.sync({ force: false }).then(() => {
